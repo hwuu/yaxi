@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+
+<head>
+<meta http-equiv="content-type" content="text/html; charset=gbk;">
+<link rel="stylesheet" type="text/css" href="/static/yaxi.css" />
+<script type="text/javascript" src="/static/highlight.js"></script>
+<title>Yaxi: Yet Another Experimental Search Engine</title>
+</head>
+
+<body style="margin: 0 0 0 0" onLoad="inputBox_query.focus()">
+
+<div class="queryArea">
+    <table width="100%" height="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+            <td style="width: 196">
+                <div><img src="/static/yaxi.png" border="0" style="cursor: pointer"
+                    onClick="yaxi();inputBox_query.focus();"/></div>
+            </td>
+            <td>
+                <div><input type="text" id="inputBox_query"
+                    style="font-size: 18; width: 100%; height: 32; padding: 4" autocomplete="off"
+                    onKeyDown="if (event.keyCode == 13) doSearch();"></div>
+            </td>
+            <td style="width: 10"></td>
+            <td style="width: 70">
+                <div><input type="button" value="Search"
+                    id="searchButton" class="searchButton" 
+                    onClick="doSearch()"></div>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div id="resultAreaDiv" class="resultArea"></div>
+
+</body>
+
+<script>
+
+//
+///
+//
+
+var initialQueryString = window.location.hash.substring(1);
+var qStr = getParameter(initialQueryString, "q");
+if (qStr != null) {
+    inputBox_query.value = unescape(qStr);
+    doSearch();
+}
+
+//
+///
+//
+
+function getParameter(queryString, name)
+{
+    var vars = queryString.split("&");
+    for (var i = 0; i < vars.length; i++) {
+        var pair = vars[i].split("=");
+        if (pair[0] == name) {
+            return pair[1];
+        }
+    }
+    return null;
+}
+
+//
+///
+//
+
+function doSearch()
+{
+    var queryString = "q=" + escape(inputBox_query.value) + "&k=10&p=1";
+    window.location = "#" + queryString;
+    sendAjaxRequest("/yaxis?" + queryString, display);
+    inputBox_query.focus();
+}
+
+//
+///
+//
+
+function sendAjaxRequest(url, callback)
+{
+    var request = createRequest();
+    request.onreadystatechange = function()
+    {
+        if (request.readyState == 4 && request.status == 200) {
+            callback(request.responseText);
+        }
+    };
+    request.open("get", url);
+    request.send(null);
+}
+
+//
+///
+//
+
+function display(responseText)
+{
+    if (responseText == null) {
+        return;
+    }
+    var response = eval("(" + responseText + ")");
+    var answers = response.answers;
+    //
+    var s = "";
+    //
+    s += "<table width='100%' cellpadding=6 border=0 valign='top'" +
+        " style='border-top: 1px dotted black'>" +
+        "<tbody>";
+    for (var i = 0; i < answers.length; i++) {
+        var title = answers[i].title;
+        var url = answers[i].url;
+        var snippet = answers[i].snippet;
+        s += "<tr><td>";
+        s += genResultRow(title, url, snippet);
+        s += "</td></tr>";
+    }
+    s += "<tr></tr>";
+    s += "</tbody></table>";
+    //
+    resultAreaDiv.innerHTML = s;
+}
+
+//
+///
+//
+
+function genResultRow(title, url, snippet)
+{
+    var s = "";
+    var sTitle = "<a target='_blank' href='" + url + "'><font size='3' color='#1010ce'>" +
+        highlight(inputBox_query.value, title)+
+        "</font></a>";
+    var sSnippet = "<font color='#000000'>" +
+        highlight(inputBox_query.value, snippet) +
+        "</font>";
+    var sUrl = "<font color='#08754a'>" + 
+        highlight(inputBox_query.value, url) +
+        "</font>";
+    s += "<table width='100%' cellspacing=0 cellpadding=0>";
+    s += "<tr><td>" + sTitle + "</td></tr>";
+    s += "<tr height=3/>";
+    s += "<tr><td>" + sSnippet + "</td></tr>";
+    s += "<tr height=2/>";
+    s += "<tr><td>" + sUrl + "</td></tr>";
+    s += "</table>";
+    return s;
+}
+
+//
+///
+//
+
+function createRequest()
+{
+    var req = null;
+    if (window.XMLHttpRequest) { // Non-IE browsers
+        req = new XMLHttpRequest();
+    } else if (window.ActiveXObject) { // IE browsers
+        try { // IE6.0
+            req = new ActiveXObject("Microsoft.XMLHTTP");
+        } catch (e1) {
+            try {
+                req = new ActiveXObject("MSXML2.XMLHTTP");
+            } catch (e2) {
+                try {
+                    req = new ActiveXObject("MSXML3.XMLHTTP");
+                } catch (e3) {
+                    alert("Error: " + e3)
+                }
+            }
+        }
+    } else {
+        alert("Error: Unsupported borswer.");
+    }
+    return req;
+}
+
+//
+///
+//
+
+</script>
+
+</html>
+
